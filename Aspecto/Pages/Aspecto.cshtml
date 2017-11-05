@@ -1,0 +1,131 @@
+﻿@page
+@model AspectoModel
+@{
+}
+
+<p id="displaytext"></p>
+
+<p><span id="seconds">00</span>:<span id="tens">00</span></p>
+<button id="button-start">Start</button>
+<button id="button-stop">Stop</button>
+<p id="negativestuff"></p>
+<p id="positivestuff"></p>
+
+<div id='video-container' class='sub-graph'>
+    <video width="500" height="400" autoplay="true" id="webcamStream"></video>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="/js/webcam.js"></script>
+<script src="js/WebcamLib.js"></script>
+<script src="js/WebcamAPI.js"></script>
+<script src="js/VisionAPI.js"></script>
+<script src="js/loop.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/annyang/2.6.0/annyang.min.js"></script>
+<script>
+    //TEXT ANALYTICS VARIABLES
+    var positive = 0;
+    var negative = 0;
+    var hello = 1;
+    //Speech Recognition
+    if (annyang) {
+
+        // define the functions our commands will run.
+        var getStarted = function () {
+            window.location.href = 'https://github.com/TalAter/annyang';
+        }
+        var commands = {
+            //HELLO
+            '*hello*': function () {
+                document.getElementById("displaytext").innerHTML += "Hello To You Too." + hello + '<br>';
+                document.body.style.backgroundColor = "#D3DCE6";
+                document.body.style.color = "black";
+                hello = hello + 1;
+            },
+            '*this sucks*': function () {
+                negative += 1;
+                console.log(negative);
+            },
+            '*hating life*': function () {
+                negative += 1;
+                console.log(negative);
+            },
+            '*great life*': function () {
+                positive += 1;
+            },
+            '*wonderful life*': function () {
+                positive += 1;
+            }
+        };
+
+        // Add our commands to annyang
+        annyang.addCommands(commands);
+
+        // OPTIONAL: activate debug mode for detailed logging in the console
+        annyang.debug();
+        // OPTIONAL: Set a language for speech recognition (defaults to English)
+        annyang.setLanguage('en');
+        // Start listening. You can call this here, or attach this call to an event, button, etc.
+    } else {
+        $(document).ready(function () {
+            $('#unsupported').fadeIn('fast');
+        });
+    }
+
+    //Timer
+    window.onload = function () {
+
+        var seconds = 00;
+        var tens = 00;
+        var appendTens = document.getElementById("tens")
+        var appendSeconds = document.getElementById("seconds")
+        var buttonStart = document.getElementById('button-start');
+        var buttonStop = document.getElementById('button-stop');
+        var buttonReset = document.getElementById('button-reset');
+        var Interval;
+
+        buttonStart.onclick = function () {
+            annyang.start({ autoRestart: true, continuous: false });
+            //requestData();
+            clearInterval(Interval);
+            Interval = setInterval(startTimer, 10);
+        }
+
+        buttonStop.onclick = function () {
+            annyang.abort();
+            clearInterval(Interval);
+            document.getElementById("negativestuff").innerHTML = 'Negative Words : ' + negative;
+            document.getElementById("positivestuff").innerHTML = 'Positive Words : ' + positive;
+        }
+
+
+
+        function startTimer() {
+            tens++;
+
+            if (tens < 9) {
+                appendTens.innerHTML = "0" + tens;
+            }
+
+            if (tens > 9) {
+                appendTens.innerHTML = tens;
+
+            }
+
+            if (tens > 99) {
+                console.log("seconds");
+                seconds++;
+                appendSeconds.innerHTML = "0" + seconds;
+                tens = 0;
+                appendTens.innerHTML = "0" + 0;
+            }
+
+            if (seconds > 9) {
+                appendSeconds.innerHTML = seconds;
+            }
+            if ((seconds % 9) == 1 && tens <= 1) {
+                requestData();
+            }
+        }
+    }
+</script>
